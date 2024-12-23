@@ -26,12 +26,15 @@
     "target": "ES2019"
   },
   "include": [
-    "src/**/*.ts",
-    "test/**/*.ts",
     ".projenrc.ts",
     "projenrc/**/*.ts"
   ],
   "exclude": [
     "node_modules"
+  ],
+  "references": [
+    {
+      "path": "packages/@aws-cdk-testing/cli-integ"
+    }
   ]
 }

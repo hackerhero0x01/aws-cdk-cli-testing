@@ -27,8 +27,11 @@
     "stripInternal": true,
     "target": "ES2019"
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": []
+  "include": [],
+  "exclude": [],
+  "references": [
+    {
+      "path": "packages/@aws-cdk-testing/cli-integ"
+    }
+  ]
 }
