@@ -150,7 +150,7 @@ const cliInteg = configureProject(
     // We set the majorVersion of this to 3.x, so that we can release
     // it already without interfering with the current crop of CDK
     // integ tests.
-    majorVersion: 3,
+    minMajorVersion: 3,
 
     srcdir: '.',
     libdir: '.',
