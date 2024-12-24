@@ -50,8 +50,8 @@ function configureProject<A extends pj.typescript.TypeScriptProject>(x: A): A {
 }
 
 const workflowRunsOn = [
-  // 'ubuntu-latest',
-  'awscdk-service-spec_ubuntu-latest_32-core',
+  'ubuntu-latest',
+  // 'awscdk-service-spec_ubuntu-latest_32-core',
 ];
 
 /**

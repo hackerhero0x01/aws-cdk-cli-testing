@@ -1,4 +1,9 @@
-const baseConfig = require('@aws-cdk/cdk-build-tools/config/eslintrc');
-baseConfig.ignorePatterns.push('resources/**/*');
-baseConfig.parserOptions.project = __dirname + '/tsconfig.json';
-module.exports = baseConfig;
+var path = require('path');
+var fs = require('fs');
+var contents = fs.readFileSync(`${__dirname}/.eslintrc.json`, { encoding: 'utf-8' });
+// Strip comments, JSON.parse() doesn't like those
+contents = contents.replace(/^\/\/.*$/m, '');
+var json = JSON.parse(contents);
+// Patch the .json config with something that can only be represented in JS
+json.parserOptions.tsconfigRootDir = __dirname;
+module.exports = json;
