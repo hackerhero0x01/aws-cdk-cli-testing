@@ -215,4 +215,36 @@ for (const compiledDir of compiledDirs) {
 }
 cliInteg.gitignore.addPatterns('!resources/**/*.js');
 
+//////////////////////////////////////////////////////////////////////
+
+const build = repo.github?.tryFindWorkflow('build');
+if (!build) { throw new Error('oh no'); }
+
+const TEST_ENVIRONMENT = 'run-tests';
+
+build.addJob('run-tests', {
+  environment: TEST_ENVIRONMENT,
+  runsOn: workflowRunsOn,
+  needs: ['build'],
+  permissions: {
+    contents: pj.github.workflows.JobPermission.READ,
+    idToken: pj.github.workflows.JobPermission.WRITE,
+  },
+  steps: [
+    {
+      name: 'Authenticate Via OIDC Role',
+      id: 'creds',
+      uses: 'aws-actions/configure-aws-credentials@v4',
+      with: {
+        'aws-region': 'us-east-1',
+        'role-duration-seconds': 3600,
+        // Expect this in Environment Variables
+        'role-to-assume': '${{ vars.AWS_ROLE_TO_ASSUME_FOR_TESTING }}',
+        'role-session-name': 'run-tests@aws-cdk-cli-integ',
+        'output-credentials': true
+      },
+    },
+  ],
+});
+
 repo.synth();
