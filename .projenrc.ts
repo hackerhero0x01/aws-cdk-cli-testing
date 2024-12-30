@@ -92,7 +92,7 @@ const repo = configureProject(
 
     defaultReleaseBranch: 'main',
     devDeps: [
-      'cdklabs-projen-project-types@^0.1.213',
+      'cdklabs-projen-project-types@^0.1.215',
     ],
 
     eslintOptions: {
@@ -150,7 +150,7 @@ const cliInteg = configureProject(
     // We set the majorVersion of this to 3.x, so that we can release
     // it already without interfering with the current crop of CDK
     // integ tests.
-    minMajorVersion: 3,
+    majorVersion: 3,
 
     srcdir: '.',
     libdir: '.',
