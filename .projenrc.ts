@@ -188,10 +188,11 @@ const cliInteg = configureProject(
       'sinon@^9',
       'ts-mock-imports@^1',
       'yaml@1',
+      'yargs@^17',
+      // Jest is a runtime dependency here!
       'jest@^29',
       'jest-junit@^15',
       'ts-jest@^29',
-      'yargs@^17',
     ],
     devDeps: [
       '@types/semver@^7',
@@ -227,40 +228,58 @@ cliInteg.gitignore.addPatterns('!resources/**/*.js');
 //////////////////////////////////////////////////////////////////////
 // Add a job for running the tests to the global 'build' workflow
 
-repo.buildWorkflow?.addPostBuildJob('run-tests', {
+repo.buildWorkflow?.addPostBuildJob("run-tests", {
   environment: TEST_ENVIRONMENT,
   runsOn: workflowRunsOn,
   permissions: {
     contents: pj.github.workflows.JobPermission.READ,
     idToken: pj.github.workflows.JobPermission.WRITE,
   },
+  strategy: {
+    matrix: {
+      domain: {
+        suite: [
+          'cli-integ-tests',
+          'init-csharp',
+          'init-fsharp',
+          'init-go',
+          'init-java',
+          'init-javascript',
+          'init-python',
+          'init-typescript-app',
+          'init-typescript-lib',
+          'tool-integrations',
+        ],
+      },
+    },
+  },
   steps: [
     {
-      name: 'Authenticate Via OIDC Role',
-      id: 'creds',
-      uses: 'aws-actions/configure-aws-credentials@v4',
+      name: "Authenticate Via OIDC Role",
+      id: "creds",
+      uses: "aws-actions/configure-aws-credentials@v4",
       with: {
-        'aws-region': 'us-east-1',
-        'role-duration-seconds': 3600,
+        "aws-region": "us-east-1",
+        "role-duration-seconds": 3600,
         // Expect this in Environment Variables
-        'role-to-assume': '${{ vars.AWS_ROLE_TO_ASSUME_FOR_TESTING }}',
-        'role-session-name': 'run-tests@aws-cdk-cli-integ',
-        'output-credentials': true
+        "role-to-assume": "${{ vars.AWS_ROLE_TO_ASSUME_FOR_TESTING }}",
+        "role-session-name": "run-tests@aws-cdk-cli-integ",
+        "output-credentials": true,
       },
     },
     {
-      name: 'Download and install the test artifact',
+      name: "Download and install the test artifact",
       run: [
         `npm install --no-save ${ARTIFACTS_DIR}/*.tgz`,
         // Move the installed files to the current directory, because as
         // currently configured the tests won't run from an installed
         // node_modules directory.
-        'mv $(./node_modules/.bin/test-root)/* .',
-      ].join('\n'),
+        "mv $(./node_modules/.bin/test-root)/* .",
+      ].join("\n"),
     },
     {
-      name: 'Run the test suite: cli-integ-tests',
-      run: 'bin/run-suite --use-cli-release=latest --verbose cli-integ-tests',
+      name: "Run the test suite: ${{ matrix.suite }}",
+      run: "bin/run-suite --use-cli-release=latest --verbose ${{ matrix.suite }}",
     },
   ],
 });

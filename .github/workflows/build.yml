@@ -116,5 +116,18 @@ jobs:
         run: |-
           npm install --no-save packages/@aws-cdk-testing/cli-integ/dist/js/*.tgz
           mv $(./node_modules/.bin/test-root)/* .
-      - name: "Run the test suite: cli-integ-tests"
-        run: bin/run-suite --use-cli-release=latest --verbose cli-integ-tests
+      - name: "Run the test suite: ${{ matrix.suite }}"
+        run: bin/run-suite --use-cli-release=latest --verbose ${{ matrix.suite }}
+    strategy:
+      matrix:
+        suite:
+          - cli-integ-tests
+          - init-csharp
+          - init-fsharp
+          - init-go
+          - init-java
+          - init-javascript
+          - init-python
+          - init-typescript-app
+          - init-typescript-lib
+          - tool-integrations
