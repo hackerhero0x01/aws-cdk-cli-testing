@@ -140,6 +140,8 @@ const repo = configureProject(
   }),
 );
 
+new pj.github.AutoQueue(repo);
+
 const cliInteg = configureProject(
   new yarn.TypeScriptWorkspace({
     ...genericCdkProps(),
@@ -181,8 +183,11 @@ const cliInteg = configureProject(
       'sinon@^9',
       'ts-mock-imports@^1',
       'yaml@1',
-      'jest@^29',
       'yargs@^17',
+      // Jest is a runtime dependency here!
+      'jest@^29',
+      'jest-junit@^15',
+      'ts-jest@^29',
     ],
     devDeps: [
       '@types/semver@^7',
