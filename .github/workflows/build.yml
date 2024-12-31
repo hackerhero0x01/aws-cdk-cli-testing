@@ -112,6 +112,10 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME_FOR_TESTING }}
           role-session-name: run-tests@aws-cdk-cli-integ
           output-credentials: true
+      - name: Set git identity
+        run: |-
+          git config user.name "aws-cdk-cli-integ"
+          git config user.email "noreply@example.com"
       - name: Download and install the test artifact
         run: |-
           npm install --no-save packages/@aws-cdk-testing/cli-integ/dist/js/*.tgz

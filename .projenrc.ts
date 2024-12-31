@@ -1,6 +1,6 @@
 import { yarn } from 'cdklabs-projen-project-types';
 import * as pj from 'projen';
-import { AutoQueue } from 'projen/lib/github';
+import { AutoQueue, WorkflowSteps } from 'projen/lib/github';
 
 // 5.7 sometimes gives a weird error in `ts-jest` in `@aws-cdk/cli-lib-alpha`
 // https://github.com/microsoft/TypeScript/issues/60159
@@ -270,6 +270,12 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
         "output-credentials": true,
       },
     },
+    WorkflowSteps.setupGitIdentity({
+      gitIdentity: {
+        name: "aws-cdk-cli-integ",
+        email: "noreply@example.com",
+      },
+    }),
     {
       name: "Download and install the test artifact",
       run: [
