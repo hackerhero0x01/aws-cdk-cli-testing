@@ -1,5 +1,6 @@
 import { yarn } from 'cdklabs-projen-project-types';
 import * as pj from 'projen';
+import { AutoQueue } from 'projen/lib/github';
 
 // 5.7 sometimes gives a weird error in `ts-jest` in `@aws-cdk/cli-lib-alpha`
 // https://github.com/microsoft/TypeScript/issues/60159
@@ -146,6 +147,8 @@ const repo = configureProject(
     artifactsDirectory: ARTIFACTS_DIR,
   }),
 );
+
+new AutoQueue(repo);
 
 const cliInteg = configureProject(
   new yarn.TypeScriptWorkspace({

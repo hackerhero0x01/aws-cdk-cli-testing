@@ -42,5 +42,6 @@ jspm_packages/
 !/src/
 /lib
 /dist/
+!/.github/workflows/auto-queue.yml
 !/.projenrc.ts
 !/.github/workflows/release.yml
