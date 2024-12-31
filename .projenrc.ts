@@ -7,6 +7,9 @@ const TYPESCRIPT_VERSION = '5.6';
 
 const TEST_ENVIRONMENT = 'run-tests';
 
+// This is for the test workflow, to know which artifacts to zip up
+const ARTIFACTS_DIR = 'packages/@aws-cdk-testing/cli-integ/dist/js';
+
 /**
  * Projen depends on TypeScript-eslint 7 by default.
  *
@@ -140,8 +143,7 @@ const repo = configureProject(
       },
     },
 
-    // This is for the test workflow
-    artifactsDirectory: '.',
+    artifactsDirectory: ARTIFACTS_DIR,
   }),
 );
 
@@ -243,6 +245,16 @@ repo.buildWorkflow?.addPostBuildJob('run-tests', {
         'role-session-name': 'run-tests@aws-cdk-cli-integ',
         'output-credentials': true
       },
+    },
+    {
+      name: 'Download and install the test artifact',
+      run: [
+        `npm install --no-save ${ARTIFACTS_DIR}/*.tgz`,
+        // Move the installed files to the current directory, because as
+        // currently configured the tests won't run from an installed
+        // node_modules directory.
+        'mv $(./node_modules/.bin/test-root)/* .',
+      ].join('\n'),
     },
     {
       name: 'Run the test suite: cli-integ-tests',

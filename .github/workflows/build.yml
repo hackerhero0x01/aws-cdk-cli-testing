@@ -47,13 +47,13 @@ jobs:
           cat repo.patch
           exit 1
       - name: Backup artifact permissions
-        run: cd . && getfacl -R . > permissions-backup.acl
+        run: cd packages/@aws-cdk-testing/cli-integ/dist/js && getfacl -R . > permissions-backup.acl
         continue-on-error: true
       - name: Upload artifact
         uses: actions/upload-artifact@v4.4.0
         with:
           name: build-artifact
-          path: .
+          path: packages/@aws-cdk-testing/cli-integ/dist/js
           overwrite: true
   self-mutation:
     needs: build
@@ -99,9 +99,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifact
-          path: .
+          path: packages/@aws-cdk-testing/cli-integ/dist/js
       - name: Restore build artifact permissions
-        run: cd . && setfacl --restore=permissions-backup.acl
+        run: cd packages/@aws-cdk-testing/cli-integ/dist/js && setfacl --restore=permissions-backup.acl
         continue-on-error: true
       - name: Authenticate Via OIDC Role
         id: creds
@@ -112,5 +112,9 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME_FOR_TESTING }}
           role-session-name: run-tests@aws-cdk-cli-integ
           output-credentials: true
+      - name: Download and install the test artifact
+        run: |-
+          npm install --no-save packages/@aws-cdk-testing/cli-integ/dist/js/*.tgz
+          mv $(./node_modules/.bin/test-root)/* .
       - name: "Run the test suite: cli-integ-tests"
         run: bin/run-suite --use-cli-release=latest --verbose cli-integ-tests
