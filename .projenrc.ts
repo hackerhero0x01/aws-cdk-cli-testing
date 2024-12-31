@@ -270,6 +270,7 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
         "output-credentials": true,
       },
     },
+    // This is necessary for the init tests to succeed, they set up a git repo.
     WorkflowSteps.setupGitIdentity({
       gitIdentity: {
         name: "aws-cdk-cli-integ",
