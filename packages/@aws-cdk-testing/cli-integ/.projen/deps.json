@@ -200,6 +200,11 @@
       "type": "runtime"
     },
     {
+      "name": "jest-junit",
+      "version": "^15",
+      "type": "runtime"
+    },
+    {
       "name": "jest",
       "version": "^29",
       "type": "runtime"
@@ -232,6 +237,11 @@
     {
       "name": "sinon",
       "version": "^9",
+      "type": "runtime"
+    },
+    {
+      "name": "ts-jest",
+      "version": "^29",
       "type": "runtime"
     },
     {

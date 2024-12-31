@@ -189,6 +189,8 @@ const cliInteg = configureProject(
       'ts-mock-imports@^1',
       'yaml@1',
       'jest@^29',
+      'jest-junit@^15',
+      'ts-jest@^29',
       'yargs@^17',
     ],
     devDeps: [
