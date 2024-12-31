@@ -46,6 +46,15 @@ jobs:
           echo "::error::Files were changed during build (see build log). If this was triggered from a fork, you will need to update your branch."
           cat repo.patch
           exit 1
+      - name: Backup artifact permissions
+        run: cd . && getfacl -R . > permissions-backup.acl
+        continue-on-error: true
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4.4.0
+        with:
+          name: build-artifact
+          path: .
+          overwrite: true
   self-mutation:
     needs: build
     runs-on: ubuntu-latest
@@ -84,7 +93,16 @@ jobs:
       contents: read
       id-token: write
     environment: run-tests
+    if: ${{ !needs.build.outputs.self_mutation_happened }}
     steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+          path: .
+      - name: Restore build artifact permissions
+        run: cd . && setfacl --restore=permissions-backup.acl
+        continue-on-error: true
       - name: Authenticate Via OIDC Role
         id: creds
         uses: aws-actions/configure-aws-credentials@v4
@@ -94,3 +112,5 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME_FOR_TESTING }}
           role-session-name: run-tests@aws-cdk-cli-integ
           output-credentials: true
+      - name: "Run the test suite: cli-integ-tests"
+        run: bin/run-suite --use-cli-release=latest --verbose cli-integ-tests

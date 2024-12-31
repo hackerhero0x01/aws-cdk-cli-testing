@@ -5,6 +5,8 @@ import * as pj from 'projen';
 // https://github.com/microsoft/TypeScript/issues/60159
 const TYPESCRIPT_VERSION = '5.6';
 
+const TEST_ENVIRONMENT = 'run-tests';
+
 /**
  * Projen depends on TypeScript-eslint 7 by default.
  *
@@ -137,6 +139,9 @@ const repo = configureProject(
         },
       },
     },
+
+    // This is for the test workflow
+    artifactsDirectory: '.',
   }),
 );
 
@@ -216,16 +221,11 @@ for (const compiledDir of compiledDirs) {
 cliInteg.gitignore.addPatterns('!resources/**/*.js');
 
 //////////////////////////////////////////////////////////////////////
+// Add a job for running the tests to the global 'build' workflow
 
-const build = repo.github?.tryFindWorkflow('build');
-if (!build) { throw new Error('oh no'); }
-
-const TEST_ENVIRONMENT = 'run-tests';
-
-build.addJob('run-tests', {
+repo.buildWorkflow?.addPostBuildJob('run-tests', {
   environment: TEST_ENVIRONMENT,
   runsOn: workflowRunsOn,
-  needs: ['build'],
   permissions: {
     contents: pj.github.workflows.JobPermission.READ,
     idToken: pj.github.workflows.JobPermission.WRITE,
@@ -243,6 +243,10 @@ build.addJob('run-tests', {
         'role-session-name': 'run-tests@aws-cdk-cli-integ',
         'output-credentials': true
       },
+    },
+    {
+      name: 'Run the test suite: cli-integ-tests',
+      run: 'bin/run-suite --use-cli-release=latest --verbose cli-integ-tests',
     },
   ],
 });
