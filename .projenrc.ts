@@ -239,6 +239,7 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
     idToken: pj.github.workflows.JobPermission.WRITE,
   },
   strategy: {
+    failFast: false,
     matrix: {
       domain: {
         suite: [
@@ -289,8 +290,18 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
       ].join("\n"),
     },
     {
+      name: "Determine latest CLI version",
+      id: 'cli_version',
+      run: [
+        "CLI_VERSION=$(cd ${TMPDIR:-/tmp} && npm view aws-cdk version)",
+        'echo "CLI version: ${CLI_VERSION}"',
+        'echo "cli_version=${CLI_VERSION}" >> $GITHUB_OUTPUT',
+      ].join('\n'),
+
+    },
+    {
       name: "Run the test suite: ${{ matrix.suite }}",
-      run: "bin/run-suite --use-cli-release=latest --verbose ${{ matrix.suite }}",
+      run: "bin/run-suite --use-cli-release=${{ steps.cli_version.outputs.cli_version }} --verbose ${{ matrix.suite }}",
     },
   ],
 });
