@@ -240,6 +240,9 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
   env: {
     // Otherwise Maven is too noisy
     MAVEN_ARGS: '--no-transfer-progress',
+    // This is not actually a canary, but this prevents the tests from making
+    // assumptions about the availability of source packages.
+    IS_CANARY: 'true',
   },
   strategy: {
     failFast: false,
