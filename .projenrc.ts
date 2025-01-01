@@ -263,7 +263,7 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
   steps: [
     {
       name: 'Set up JDK 18',
-      if: '${{ matrix.suite }} == "init-java"',
+      if: 'matrix.suite == "init-java"',
       uses: 'actions/setup-java@v4',
       with: {
         'java-version': '18',
