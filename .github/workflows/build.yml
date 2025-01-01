@@ -106,7 +106,7 @@ jobs:
         run: cd packages/@aws-cdk-testing/cli-integ/dist/js && setfacl --restore=permissions-backup.acl
         continue-on-error: true
       - name: Set up JDK 18
-        if: contains(['init-java', 'cli-integ-tests'], matrix.suite)
+        if: matrix.suite == 'init-java' || matrix.suite == 'cli-integ-tests'
         uses: actions/setup-java@v4
         with:
           java-version: "18"
