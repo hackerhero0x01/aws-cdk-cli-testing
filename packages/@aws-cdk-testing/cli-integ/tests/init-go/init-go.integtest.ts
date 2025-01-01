@@ -18,7 +18,7 @@ import { integTest, withTemporaryDirectory, ShellHelper, withPackages } from '..
         throw new Error('Cannot figure out CI system root directory');
       }
 
-      await shell.shell(['go', 'mod', 'edit', '-replace', `github.com/aws/aws-cdk-go/awscdk/v2=$dir/go/awscdk`]);
+      await shell.shell(['go', 'mod', 'edit', '-replace', `github.com/aws/aws-cdk-go/awscdk/v2=${dir}/go/awscdk`]);
     }
 
     await shell.shell(['go', 'mod', 'tidy']);
