@@ -131,6 +131,7 @@ const repo = configureProject(
     },
 
     githubOptions: {
+      mergeQueue: true,
       pullRequestLintOptions: {
         semanticTitleOptions: {
           types: ['feat', 'fix', 'chore', 'refactor'],
@@ -139,8 +140,6 @@ const repo = configureProject(
     },
   }),
 );
-
-new pj.github.AutoQueue(repo);
 
 const cliInteg = configureProject(
   new yarn.TypeScriptWorkspace({
