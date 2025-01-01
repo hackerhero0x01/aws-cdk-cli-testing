@@ -268,7 +268,6 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
       with: {
         'java-version': '18',
         'distribution': 'corretto',
-        'cache': 'maven'
       },
     },
     {

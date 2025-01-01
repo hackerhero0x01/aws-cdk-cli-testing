@@ -111,7 +111,6 @@ jobs:
         with:
           java-version: "18"
           distribution: corretto
-          cache: maven
       - name: Authenticate Via OIDC Role
         id: creds
         uses: aws-actions/configure-aws-credentials@v4
