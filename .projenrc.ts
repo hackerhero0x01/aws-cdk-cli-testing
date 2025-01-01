@@ -238,6 +238,10 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
     contents: pj.github.workflows.JobPermission.READ,
     idToken: pj.github.workflows.JobPermission.WRITE,
   },
+  env: {
+    // Otherwise Maven is too noisy
+    MAVEN_ARGS: '--no-transfer-progress',
+  },
   strategy: {
     failFast: false,
     matrix: {
@@ -258,6 +262,16 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
     },
   },
   steps: [
+    {
+      name: 'Set up JDK 18',
+      if: '${{ matrix.suite }} == "init-java"',
+      uses: 'actions/setup-java@v2',
+      with: {
+        'java-version': '18',
+        'distribution': 'corretto',
+        'cache': 'maven'
+      },
+    },
     {
       name: "Authenticate Via OIDC Role",
       id: "creds",

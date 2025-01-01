@@ -93,6 +93,8 @@ jobs:
       contents: read
       id-token: write
     environment: run-tests
+    env:
+      MAVEN_ARGS: --no-transfer-progress
     if: ${{ !needs.build.outputs.self_mutation_happened }}
     steps:
       - name: Download build artifacts
@@ -103,6 +105,13 @@ jobs:
       - name: Restore build artifact permissions
         run: cd packages/@aws-cdk-testing/cli-integ/dist/js && setfacl --restore=permissions-backup.acl
         continue-on-error: true
+      - name: Set up JDK 18
+        if: ${{ matrix.suite }} == "init-java"
+        uses: actions/setup-java@v2
+        with:
+          java-version: "18"
+          distribution: corretto
+          cache: maven
       - name: Authenticate Via OIDC Role
         id: creds
         uses: aws-actions/configure-aws-credentials@v4
