@@ -263,7 +263,7 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
   steps: [
     {
       name: 'Set up JDK 18',
-      if: 'matrix.suite == \'init-java\'',
+      if: 'contains([\'init-java\', \'cli-integ-tests\'], matrix.suite)',
       uses: 'actions/setup-java@v4',
       with: {
         'java-version': '18',
