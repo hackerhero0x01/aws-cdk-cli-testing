@@ -56,24 +56,36 @@ export function integTest(
         },
       });
     } catch (e: any) {
+      // Print the buffered output, only if the test fails.
       output.write(e.message);
       output.write(e.stack);
-
       process.stderr.write(`[INTEG TEST::${name}] Failed: ${e}\n`);
 
-      // GitHub Actions compatible output formatting
-      // https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions#setting-an-error-message
-      const written = process.stderr.write(`::error title=Failed ${name}::${e.message}\n`);
-      if (!written) {
-        // Wait for drain
-        await new Promise((ok) => process.stdout.once('drain', ok));
-      }
+      const isGitHub = !!process.env.GITHUB_RUN_ID;
 
-      // Print output only if the test fails. Use 'console.log' so the output is buffered by
-      // jest and prints without a stack trace (if verbose: false).
-      console.log(`::group::Test failure ${name} (click to expand)`);
-      console.log(output.buffer().toString());
-      console.log('::endgroup::');
+      if (isGitHub) {
+        // GitHub Actions compatible output formatting
+        // https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions#setting-an-error-message
+        let written = process.stderr.write(`::error title=Failed ${name}::${e.message}\n`);
+        if (!written) {
+          // Wait for drain
+          await new Promise((ok) => process.stderr.once('drain', ok));
+        }
+
+        // Print output only if the test fails. Use 'console.log' so the output is buffered by
+        // jest and prints without a stack trace (if verbose: false).
+        process.stdout.write(`::group::Failure details: ${name} (click to expand)\n`);
+        process.stdout.write(`${output.buffer().toString()}\n`);
+        written = process.stdout.write('::endgroup::\n');
+        if (!written) {
+          // Wait for drain
+          await new Promise((ok) => process.stdout.once('drain', ok));
+        }
+      } else {
+        // Use 'console.log' so the output is buffered by
+        // jest and prints without a stack trace (if verbose: false).
+        console.log(output.buffer().toString());
+      }
       throw e;
     } finally {
       const duration = Date.now() - now;
