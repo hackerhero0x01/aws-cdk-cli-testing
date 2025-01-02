@@ -11,6 +11,12 @@ if (SKIP_TESTS) {
   process.stderr.write(`ℹ️ Skipping tests: ${JSON.stringify(SKIP_TESTS)}\n`);
 }
 
+// Whether we want to stop after the first failure, for quicker debugging (hopefully).
+const FAIL_FAST = true;
+
+// Keep track of whether the suite has failed. If so, we stop running.
+let failed = false;
+
 export interface TestContext {
   readonly randomString: string;
   readonly output: NodeJS.WritableStream;
@@ -48,6 +54,10 @@ export function integTest(
     const now = Date.now();
     process.stderr.write(`[INTEG TEST::${name}] Starting (pid ${process.pid})...\n`);
     try {
+      if (FAIL_FAST && failed) {
+        throw new Error('FAIL_FAST requested and currently failing. Stopping test early.');
+      }
+
       return await callback({
         output,
         randomString: randomString(),
@@ -56,6 +66,8 @@ export function integTest(
         },
       });
     } catch (e: any) {
+      failed = true;
+
       // Print the buffered output, only if the test fails.
       output.write(e.message);
       output.write(e.stack);
