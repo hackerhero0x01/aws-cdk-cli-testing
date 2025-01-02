@@ -24,9 +24,6 @@ const TYPESCRIPT_VERSION_AGE_DAYS = 2 * 365;
 
 const TYPESCRIPT_VERSIONS = typescriptVersionsYoungerThanDaysSync(TYPESCRIPT_VERSION_AGE_DAYS, typescriptVersionsSync());
 
-// eslint-disable-next-line no-console
-console.log(TYPESCRIPT_VERSIONS);
-
 /**
  * Test our generated code with various versions of TypeScript
  */

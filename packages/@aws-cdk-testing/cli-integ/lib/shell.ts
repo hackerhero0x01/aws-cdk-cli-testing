@@ -25,10 +25,6 @@ export async function shell(command: string[], options: ShellOptions = {}): Prom
   writeToOutputs(`💻 ${command.join(' ')}\n`);
   const show = options.show ?? 'always';
 
-  if (process.env.VERBOSE) {
-    outputs.add(process.stdout);
-  }
-
   const env = options.env ?? (options.modEnv ? { ...process.env, ...options.modEnv } : process.env);
 
   const child = child_process.spawn(command[0], command.slice(1), {
