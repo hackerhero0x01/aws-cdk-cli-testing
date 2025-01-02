@@ -56,13 +56,20 @@ export function integTest(
         },
       });
     } catch (e: any) {
-      process.stderr.write(`[INTEG TEST::${name}] Failed: ${e}\n`);
       output.write(e.message);
       output.write(e.stack);
+
+      process.stderr.write(`[INTEG TEST::${name}] Failed: ${e}\n`);
+
+      // GitHub Actions compatible output formatting
+      // https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions#setting-an-error-message
+      process.stderr.write(`::error title=Failed ${name}::${e.message}\n`);
+
       // Print output only if the test fails. Use 'console.log' so the output is buffered by
       // jest and prints without a stack trace (if verbose: false).
-      // eslint-disable-next-line no-console
+      console.log(`::group::Test failure ${name} (click to expand)`);
       console.log(output.buffer().toString());
+      console.log('::endgroup::');
       throw e;
     } finally {
       const duration = Date.now() - now;
