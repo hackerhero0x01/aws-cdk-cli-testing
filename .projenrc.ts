@@ -317,6 +317,17 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
     {
       name: "Run the test suite: ${{ matrix.suite }}",
       run: "bin/run-suite --use-cli-release=${{ steps.cli_version.outputs.cli_version }} --verbose ${{ matrix.suite }}",
+      env: {
+        JEST_TEST_CONCURRENT: 'true',
+        JSII_SILENCE_WARNING_DEPRECATED_NODE_VERSION: 'true',
+        JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION: 'true',
+        JSII_SILENCE_WARNING_KNOWN_BROKEN_NODE_VERSION: 'true',
+        DOCKERHUB_DISABLED: 'true',
+        AWS_REGIONS: ['us-east-2', 'eu-west-1', 'eu-north-1', 'ap-northeast-1', 'ap-south-1'].join(','),
+        CDK_MAJOR_VERSION: '2',
+        RELEASE_TAG: 'latest',
+        GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}',
+      },
     },
   ],
 });
