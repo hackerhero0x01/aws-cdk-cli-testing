@@ -63,7 +63,11 @@ export function integTest(
 
       // GitHub Actions compatible output formatting
       // https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions#setting-an-error-message
-      process.stderr.write(`::error title=Failed ${name}::${e.message}\n`);
+      const written = process.stderr.write(`::error title=Failed ${name}::${e.message}\n`);
+      if (!written) {
+        // Wait for drain
+        await new Promise((ok) => process.stdout.once('drain', ok));
+      }
 
       // Print output only if the test fails. Use 'console.log' so the output is buffered by
       // jest and prints without a stack trace (if verbose: false).
