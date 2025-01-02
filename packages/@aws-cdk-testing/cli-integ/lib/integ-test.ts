@@ -12,7 +12,7 @@ if (SKIP_TESTS) {
 }
 
 // Whether we want to stop after the first failure, for quicker debugging (hopefully).
-const FAIL_FAST = true;
+const FAIL_FAST = process.env.FAIL_FAST === 'true';
 
 // Keep track of whether the suite has failed. If so, we stop running.
 let failed = false;
