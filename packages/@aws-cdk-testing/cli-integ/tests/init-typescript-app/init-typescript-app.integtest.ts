@@ -42,6 +42,10 @@ TYPESCRIPT_VERSIONS.forEach(tsVersion => {
     await removeDevDependencies(context);
 
     await shell.shell(['npm', 'install', '--save-dev', `typescript@${tsVersion}`]);
+
+    // After we've removed devDependencies we need to re-install ts-node because it's necessary for `cdk synth`
+    await shell.shell(['npm', 'install', '--save-dev', `ts-node@^10`]);
+
     await shell.shell(['npm', 'install']); // Older versions of npm require this to be a separate step from the one above
     await shell.shell(['npx', 'tsc', '--version']);
     await shell.shell(['npm', 'prune']);
