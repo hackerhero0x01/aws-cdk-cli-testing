@@ -77,7 +77,7 @@ export interface ShellOptions extends child_process.SpawnOptions {
   /**
    * Properties to add to 'env'
    */
-  readonly modEnv?: Record<string, string>;
+  readonly modEnv?: Record<string, string | undefined>;
 
   /**
    * Don't fail when exiting with an error

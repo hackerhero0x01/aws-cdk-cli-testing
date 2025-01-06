@@ -86,9 +86,11 @@ export function integTest(
 
         // Print output only if the test fails. Use 'console.log' so the output is buffered by
         // jest and prints without a stack trace (if verbose: false).
-        process.stdout.write(`::group::Failure details: ${name} (click to expand)\n`);
-        process.stdout.write(`${output.buffer().toString()}\n`);
-        written = process.stdout.write('::endgroup::\n');
+        written = process.stdout.write([
+          `::group::Failure details: ${name} (click to expand)\n`,
+          `${output.buffer().toString()}\n`,
+          '::endgroup::\n',
+        ].join(''));
         if (!written) {
           // Wait for drain
           await new Promise((ok) => process.stdout.once('drain', ok));
