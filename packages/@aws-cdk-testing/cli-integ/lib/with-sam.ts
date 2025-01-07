@@ -207,23 +207,24 @@ export async function shellWithAction(
     let actionOutput: any;
     let actionExecuted = false;
 
-    function executeAction(chunk: any) {
+    async function maybeExecuteAction(chunk: any) {
       out.push(Buffer.from(chunk));
       if (!actionExecuted && typeof filter === 'string' && Buffer.concat(out).toString('utf-8').includes(filter) && typeof action === 'function') {
         actionExecuted = true;
         writeToOutputs('before executing action');
-        action().then((output) => {
-          writeToOutputs(`action output is ${output}`);
+        try {
+          const output = await action();
+          writeToOutputs(`action output is ${JSON.stringify(output)}`);
           actionOutput = output;
           actionSucceeded = true;
-        }).catch((error) => {
+        } catch (error: any) {
           writeToOutputs(`action error is ${error}`);
           actionSucceeded = false;
           actionOutput = error;
-        }).finally(() => {
+        } finally {
           writeToOutputs('terminate sam sub process');
           killSubProcess(child, command.join(' '));
-        });
+        }
       }
     }
 
@@ -234,6 +235,7 @@ export async function shellWithAction(
         () => {
           if (!actionExecuted) {
             reject(new Error(`Timed out waiting for filter ${JSON.stringify(filter)} to appear in command output after ${actionTimeoutSeconds} seconds\nOutput so far:\n${Buffer.concat(out).toString('utf-8')}`));
+            killSubProcess(child, command.join(' '));
           }
         }, actionTimeoutSeconds * 1_000,
       ).unref();
@@ -242,7 +244,7 @@ export async function shellWithAction(
     child.stdout!.on('data', chunk => {
       writeToOutputs(chunk);
       stdout.push(chunk);
-      executeAction(chunk);
+      void maybeExecuteAction(chunk);
     });
 
     child.stderr!.on('data', chunk => {
@@ -250,7 +252,7 @@ export async function shellWithAction(
       if (options.captureStderr ?? true) {
         stderr.push(chunk);
       }
-      executeAction(chunk);
+      void maybeExecuteAction(chunk);
     });
 
     child.once('error', reject);
