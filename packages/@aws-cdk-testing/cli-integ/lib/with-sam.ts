@@ -139,6 +139,7 @@ export class SamIntegrationTestFixture extends TestFixture {
     args.push('--port');
     args.push(port.toString());
 
+    // "Press Ctrl+C to quit" looks to be printed by a Flask server built into SAM CLI.
     return this.samShell(['sam', 'local', 'start-api', ...args], 'Press CTRL+C to quit', ()=>{
       return new Promise<ActionOutput>((resolve, reject) => {
         axios.get(`http://127.0.0.1:${port}${apiPath}`).then( resp => {
@@ -257,7 +258,8 @@ export async function shellWithAction(
 
     child.once('error', reject);
 
-    child.once('close', code => {
+    // Wait for 'exit' instead of close, don't care about reading the streams all the way to the end
+    child.once('exit', code => {
       const output = (Buffer.concat(stdout).toString('utf-8') + Buffer.concat(stderr).toString('utf-8')).trim();
       if (code == null || code === 0 || options.allowErrExit) {
         let result = new Array<string>();
