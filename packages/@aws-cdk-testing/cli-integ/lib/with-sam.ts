@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import axios from 'axios';
+import { sleep } from './aws';
 import { TestContext } from './integ-test';
 import { RESOURCES_DIR } from './resources';
 import { ShellOptions, rimraf } from './shell';
@@ -158,7 +159,24 @@ export class SamIntegrationTestFixture extends TestFixture {
     // If the tests completed successfully, happily delete the fixture
     // (otherwise leave it for humans to inspect)
     if (success) {
-      rimraf(this.integTestDir);
+      const start = Date.now();
+      const deadline = start + 5 * 60_000;
+      while (Date.now() < deadline) {
+        try {
+          rimraf(this.integTestDir);
+          this.output.write(`Cleanup took ${((Date.now() - start)/1000).toFixed(0)}s\n`);
+          break;
+        } catch (e: any) {
+          // During the cleanup of the SAM test this sometimes happens.
+          if (e.code === 'EACCES') {
+            await sleep(100);
+            continue;
+          }
+
+          throw e;
+        }
+      }
+      throw new Error(`Cleanup of temp directory took too long. Giving up.`);
     }
   }
 }
@@ -224,7 +242,11 @@ export async function shellWithAction(
           actionOutput = error;
         } finally {
           writeToOutputs('terminate sam sub process\n');
-          child.kill();
+          // Nicely ask it to quit in a variety of ways
+          child.kill('SIGINT');
+          child.kill('SIGTERM');
+
+          setTimeout(() => { child.kill('SIGKILL'); }, 5000);
         }
       }
     }
@@ -259,8 +281,8 @@ export async function shellWithAction(
     child.once('error', reject);
 
     // Wait for 'exit' instead of close, don't care about reading the streams all the way to the end
-    child.once('exit', code => {
-      writeToOutputs(`Subprocess has exited with code ${code}\n`);
+    child.once('exit', (code, signal) => {
+      writeToOutputs(`Subprocess has exited with code ${code}, signal ${signal}\n`);
       const output = (Buffer.concat(stdout).toString('utf-8') + Buffer.concat(stderr).toString('utf-8')).trim();
       if (code == null || code === 0 || options.allowErrExit) {
         let result = new Array<string>();
