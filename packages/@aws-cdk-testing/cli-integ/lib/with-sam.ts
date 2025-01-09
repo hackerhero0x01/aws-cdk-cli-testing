@@ -212,19 +212,19 @@ export async function shellWithAction(
       out.push(Buffer.from(chunk));
       if (!actionExecuted && typeof filter === 'string' && Buffer.concat(out).toString('utf-8').includes(filter) && typeof action === 'function') {
         actionExecuted = true;
-        writeToOutputs('before executing action');
+        writeToOutputs('before executing action\n');
         try {
           const output = await action();
-          writeToOutputs(`action output is ${JSON.stringify(output)}`);
+          writeToOutputs(`action output is ${JSON.stringify(output)}\n`);
           actionOutput = output;
           actionSucceeded = true;
         } catch (error: any) {
-          writeToOutputs(`action error is ${error}`);
+          writeToOutputs(`action error is ${error}\n`);
           actionSucceeded = false;
           actionOutput = error;
         } finally {
-          writeToOutputs('terminate sam sub process');
-          killSubProcess(child, command.join(' '));
+          writeToOutputs('terminate sam sub process\n');
+          child.kill();
         }
       }
     }
@@ -260,6 +260,7 @@ export async function shellWithAction(
 
     // Wait for 'exit' instead of close, don't care about reading the streams all the way to the end
     child.once('exit', code => {
+      writeToOutputs(`Subprocess has exited with code ${code}\n`);
       const output = (Buffer.concat(stdout).toString('utf-8') + Buffer.concat(stderr).toString('utf-8')).trim();
       if (code == null || code === 0 || options.allowErrExit) {
         let result = new Array<string>();
@@ -274,7 +275,6 @@ export async function shellWithAction(
         reject(new Error(`'${command.join(' ')}' exited with error code ${code}. Output: \n${output}`));
       }
     });
-
   });
 }
 
