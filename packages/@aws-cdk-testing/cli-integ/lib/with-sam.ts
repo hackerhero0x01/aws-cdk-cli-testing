@@ -242,11 +242,7 @@ export async function shellWithAction(
           actionOutput = error;
         } finally {
           writeToOutputs('terminate sam sub process\n');
-          // Nicely ask it to quit in a variety of ways
-          child.kill('SIGINT');
-          child.kill('SIGTERM');
-
-          setTimeout(() => { child.kill('SIGKILL'); }, 5000);
+          killSubProcess(child, command.join(' '));
         }
       }
     }
@@ -305,10 +301,6 @@ function killSubProcess(child: child_process.ChildProcess, command: string) {
    * Check if the sub process is running in container, so child_process.spawn will
    * create multiple processes, and to kill all of them we need to run different logic
    */
-  if (fs.existsSync('/.dockerenv')) {
-    child_process.exec(`for pid in $(ps -ef | grep "${command}" | awk '{print $2}'); do kill -2 $pid; done`);
-  } else {
-    child.kill('SIGINT');
-  }
-
+  child.kill('SIGINT');
+  child_process.exec(`for pid in $(ps -ef | grep "${command}" | awk '{print $2}'); do kill -2 $pid; done`);
 }
