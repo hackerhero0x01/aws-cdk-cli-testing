@@ -148,7 +148,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |-
           whoami
-          bin/run-suite --use-cli-release=${{ steps.cli_version.outputs.cli_version }} --verbose ${{ matrix.suite }} -t 'sam'
+          node -p 'os.userInfo()'
+          id -u
+          id -g
+          bin/run-suite --use-cli-release=${{ steps.cli_version.outputs.cli_version }} --verbose ${{ matrix.suite }}
     strategy:
       fail-fast: false
       matrix:

@@ -321,7 +321,7 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
         "node -p 'os.userInfo()'",
         "id -u",
         "id -g",
-        "bin/run-suite --use-cli-release=${{ steps.cli_version.outputs.cli_version }} --verbose ${{ matrix.suite }} -t 'sam'",
+        "bin/run-suite --use-cli-release=${{ steps.cli_version.outputs.cli_version }} --verbose ${{ matrix.suite }}",
       ].join('\n'),
       env: {
         // Concurrency only for long-running cli-integ-tests
