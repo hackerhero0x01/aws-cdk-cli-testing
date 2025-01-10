@@ -162,16 +162,8 @@ export class SamIntegrationTestFixture extends TestFixture {
       const deadline = start + 5000;
       while (Date.now() < deadline) {
         try {
-          child_process.exec('ps -ef', (error, stdout1, stderr1) => {
-            if (error) {
-              this.output.write(`before dispose listing processes: ${error}\n`);
-              return;
-            }
-            if (stderr1) {
-              this.output.write(`before dispose ps stderr: ${stderr1}\n`);
-            }
-            this.output.write(`before dispose ps stdout: ${stdout1}\n`);
-          });
+          const out =  child_process.execSync('ps -ef');
+          this.output.write(`before dispose listing processes: ${out}\n`);
           rimraf(this.integTestDir);
           this.output.write(`Cleanup took ${((Date.now() - start)/1000).toFixed(0)}s\n`);
           return;
@@ -251,17 +243,11 @@ export async function shellWithAction(
           actionOutput = error;
         } finally {
           writeToOutputs('terminate sam sub process\n');
-          child_process.exec('ps -ef', (error, stdout1, stderr1) => {
-            if (error) {
-              writeToOutputs(`before killing command ${command.join(' ')} in maybeExecuteAction\nError listing processes: ${error}\n`);
-              return;
-            }
-            if (stderr1) {
-              writeToOutputs(`before killing command ${command.join(' ')} in maybeExecuteAction\nps stderr: ${stderr1}\n`);
-            }
-            writeToOutputs(`before killing command ${command.join(' ')} in maybeExecuteAction\nps stdout: ${stdout1}\n`);
-          });
-          killSubProcess(child, command.join(' '));
+          const out1 = child_process.execSync(`ps -ef | grep "${child.pid}"`);
+          process.stdout.write(`before killing sub process ps output is ${out1}\n`);
+          killSubProcess(child/*, command.join(' ')*/);
+          const out2 = child_process.execSync(`ps -ef | grep "${child.pid}"`);
+          process.stdout.write(`after killing sub process ps output is ${out2}\n`);
         }
       }
     }
@@ -273,17 +259,7 @@ export async function shellWithAction(
         () => {
           if (!actionExecuted) {
             reject(new Error(`Timed out waiting for filter ${JSON.stringify(filter)} to appear in command output after ${actionTimeoutSeconds} seconds\nOutput so far:\n${Buffer.concat(out).toString('utf-8')}`));
-            child_process.exec('ps -ef', (error, stdout1, stderr1) => {
-              if (error) {
-                writeToOutputs(`before killing command ${command.join(' ')} in shellWithAction timeout\nError listing processes: ${error}\n`);
-                return;
-              }
-              if (stderr1) {
-                writeToOutputs(`before killing command ${command.join(' ')} in shellWithAction timeout\nps stderr: ${stderr1}\n`);
-              }
-              writeToOutputs(`before killing command ${command.join(' ')} in shellWithAction timeout\nps stdout: ${stdout1}\n`);
-            });
-            killSubProcess(child, command.join(' '));
+            killSubProcess(child/*, command.join(' ')*/);
           }
         }, actionTimeoutSeconds * 1_000,
       ).unref();
@@ -325,12 +301,18 @@ export async function shellWithAction(
   });
 }
 
-function killSubProcess(child: child_process.ChildProcess, command: string) {
+function killSubProcess(child: child_process.ChildProcess/*, command: string*/) {
   /**
    * Check if the sub process is running in container, so child_process.spawn will
    * create multiple processes, and to kill all of them we need to run different logic
    */
-  // add eun command to get the list of running processes, and print it tp stdout
-  child.kill('SIGINT');
-  child_process.exec(`for pid in $(ps -ef | grep "${command}" | awk '{print $2}'); do kill -2 $pid; done`);
+  process.stdout.write(`a7a ${child.pid}`);
+  try {
+    process.stdout.write(`before killing command output for pid in $(ps -ef | grep ${child.pid} | awk '{print $2}'); do kill -2 $pid; done`);
+    const out = child_process.execSync(`for pid in $(ps -ef | grep ${child.pid} | awk '{print $2}'); do kill -2 $pid; done`);
+    process.stdout.write(`killing command output ${out}`);
+    child.kill('SIGINT');
+  } catch(e) {
+    process.stdout.write(`killing command failed ${e}`);
+  }
 }
