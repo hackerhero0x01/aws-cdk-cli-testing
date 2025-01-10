@@ -214,8 +214,6 @@ export async function shellWithAction(
   const child = child_process.spawn(command[0], command.slice(1), {
     ...options,
     env,
-    // Need this for Windows where we want .cmd and .bat to be found as well.
-    shell: true,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
@@ -308,8 +306,8 @@ function killSubProcess(child: child_process.ChildProcess/*, command: string*/) 
    */
   process.stdout.write(`a7a ${child.pid}\n`);
   try {
-    //process.stdout.write(`before killing command output for pid in $(ps -ef | grep ${child.pid} | awk '{print $2}'); do kill -2 $pid; done`);
-    //const out = child_process.execSync(`for pid in $(ps -ef | grep ${child.pid} | awk '{print $2}'); do kill -2 $pid; done`);
+    //process.stdout.write(`before killing command output kill -2 ${child.pid}`);
+    //const out = child_process.execSync(`pkill -INT -P  ${child.pid} && kill -INT ${child.pid}`);
     //process.stdout.write(`killing command output ${out}\n`);
     child.kill('SIGINT');
   } catch(e) {
