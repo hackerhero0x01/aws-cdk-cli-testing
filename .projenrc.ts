@@ -316,7 +316,10 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
     },
     {
       name: "Run the test suite: ${{ matrix.suite }}",
-      run: "bin/run-suite --use-cli-release=${{ steps.cli_version.outputs.cli_version }} --verbose ${{ matrix.suite }}",
+      run: [
+        "whoami",
+        "bin/run-suite --use-cli-release=${{ steps.cli_version.outputs.cli_version }} --verbose ${{ matrix.suite }} -t 'sam'",
+      ].join('\n'),
       env: {
         // Concurrency only for long-running cli-integ-tests
         JEST_TEST_CONCURRENT: "${{ matrix.suite == 'cli-integ-tests' && 'true' || 'false' }}",

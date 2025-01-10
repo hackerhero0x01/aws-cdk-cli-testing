@@ -148,6 +148,8 @@ export function rimraf(fsPath: string) {
       fs.unlinkSync(fsPath);
     }
   } catch (e: any) {
+    console.log(`got exception on ${fsPath}: ${e}`);
+    console.log(fs.lstatSync(fsPath));
     // We will survive ENOENT
     if (e.code !== 'ENOENT') { throw e; }
   }
