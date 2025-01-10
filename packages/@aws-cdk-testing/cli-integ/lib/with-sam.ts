@@ -159,7 +159,7 @@ export class SamIntegrationTestFixture extends TestFixture {
     // (otherwise leave it for humans to inspect)
     if (success) {
       const start = Date.now();
-      const deadline = start + 5 * 60000;
+      const deadline = start + 5000;
       while (Date.now() < deadline) {
         try {
           child_process.exec('ps -ef', (error, stdout1, stderr1) => {
