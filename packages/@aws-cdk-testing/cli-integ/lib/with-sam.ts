@@ -307,7 +307,7 @@ function killSubProcess(child: child_process.ChildProcess/*, command: string*/) 
   process.stdout.write(`a7a ${child.pid}\n`);
   try {
     process.stdout.write(`before killing command output kill -2 ${child.pid}`);
-    const out = child_process.execSync(`pkill -INT -P  ${child.pid} && kill -INT ${child.pid}`);
+    const out = child_process.execSync(`kill -INT ${child.pid}`);
     process.stdout.write(`killing command output ${out}\n`);
     //child.kill('SIGINT');
   } catch(e) {
