@@ -2,7 +2,6 @@ import * as child_process from 'child_process';
 import * as os from 'os';
 import * as path from 'path';
 import axios from 'axios';
-import { sleep } from './aws';
 import { TestContext } from './integ-test';
 import { RESOURCES_DIR } from './resources';
 import { ShellOptions, rimraf } from './shell';
@@ -158,24 +157,10 @@ export class SamIntegrationTestFixture extends TestFixture {
     // If the tests completed successfully, happily delete the fixture
     // (otherwise leave it for humans to inspect)
     if (success) {
-      const start = Date.now();
-      const deadline = start + 5 * 60_000;
-      while (Date.now() < deadline) {
-        try {
-          rimraf(this.integTestDir);
-          this.output.write(`Cleanup took ${((Date.now() - start)/1000).toFixed(0)}s\n`);
-          break;
-        } catch (e: any) {
-          // During the cleanup of the SAM test this sometimes happens.
-          if (e.code === 'EACCES') {
-            await sleep(100);
-            continue;
-          }
-
-          throw e;
-        }
+      const cleaned = rimraf(this.integTestDir);
+      if (!cleaned) {
+        console.error(`Failed to clean up ${this.integTestDir} due to permissions issues (Docker running as root?)`);
       }
-      throw new Error(`Cleanup of temp directory took too long. Giving up.`);
     }
   }
 }

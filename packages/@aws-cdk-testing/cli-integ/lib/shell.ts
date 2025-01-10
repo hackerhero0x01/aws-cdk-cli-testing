@@ -134,24 +134,33 @@ export class ShellHelper {
 
 /**
  * rm -rf reimplementation, don't want to depend on an NPM package for this
+ *
+ * Returns `true` if everything got deleted, or `false` if some files could
+ * not be deleted due to permissions issues.
  */
-export function rimraf(fsPath: string) {
+export function rimraf(fsPath: string): boolean {
   try {
+    let success = true;
     const isDir = fs.lstatSync(fsPath).isDirectory();
 
     if (isDir) {
       for (const file of fs.readdirSync(fsPath)) {
-        rimraf(path.join(fsPath, file));
+        success &&= rimraf(path.join(fsPath, file));
       }
       fs.rmdirSync(fsPath);
     } else {
       fs.unlinkSync(fsPath);
     }
+    return success;
   } catch (e: any) {
-    console.log(`got exception on ${fsPath}: ${e}`);
-    console.log(fs.lstatSync(fsPath));
-    // We will survive ENOENT
-    if (e.code !== 'ENOENT') { throw e; }
+    // Can happen if some files got generated inside a Docker container and are now inadvertently owned by `root`.
+    // We can't ever clean those up anymore, but since it only happens inside GitHub Actions containers we also don't care too much.
+    if (e.code === 'EACCESS') { return false; }
+
+    // Already gone
+    if (e.code === 'ENOENT') { return true; }
+
+    throw e;
   }
 }
 
