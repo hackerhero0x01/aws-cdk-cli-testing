@@ -306,13 +306,13 @@ function killSubProcess(child: child_process.ChildProcess/*, command: string*/) 
    * Check if the sub process is running in container, so child_process.spawn will
    * create multiple processes, and to kill all of them we need to run different logic
    */
-  process.stdout.write(`a7a ${child.pid}`);
+  process.stdout.write(`a7a ${child.pid}\n`);
   try {
-    process.stdout.write(`before killing command output for pid in $(ps -ef | grep ${child.pid} | awk '{print $2}'); do kill -2 $pid; done`);
-    const out = child_process.execSync(`for pid in $(ps -ef | grep ${child.pid} | awk '{print $2}'); do kill -2 $pid; done`);
-    process.stdout.write(`killing command output ${out}`);
+    //process.stdout.write(`before killing command output for pid in $(ps -ef | grep ${child.pid} | awk '{print $2}'); do kill -2 $pid; done`);
+    //const out = child_process.execSync(`for pid in $(ps -ef | grep ${child.pid} | awk '{print $2}'); do kill -2 $pid; done`);
+    //process.stdout.write(`killing command output ${out}\n`);
     child.kill('SIGINT');
   } catch(e) {
-    process.stdout.write(`killing command failed ${e}`);
+    process.stdout.write(`killing command failed ${e}\n`);
   }
 }
