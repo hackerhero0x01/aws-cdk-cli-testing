@@ -159,12 +159,22 @@ export class SamIntegrationTestFixture extends TestFixture {
     // (otherwise leave it for humans to inspect)
     if (success) {
       const start = Date.now();
-      const deadline = start + 5 * 60_000;
+      const deadline = start + 5 * 60000;
       while (Date.now() < deadline) {
         try {
+          child_process.exec('ps -ef', (error, stdout1, stderr1) => {
+            if (error) {
+              this.output.write(`Error listing processes: ${error}\n`);
+              return;
+            }
+            if (stderr1) {
+              this.output.write(`ps stderr: ${stderr1}\n`);
+            }
+            this.output.write(`ps stdout: ${stdout1}\n`);
+          });
           rimraf(this.integTestDir);
           this.output.write(`Cleanup took ${((Date.now() - start)/1000).toFixed(0)}s\n`);
-          break;
+          return;
         } catch (e: any) {
           // During the cleanup of the SAM test this sometimes happens.
           if (e.code === 'EACCES') {
@@ -241,7 +251,17 @@ export async function shellWithAction(
           actionOutput = error;
         } finally {
           writeToOutputs('terminate sam sub process\n');
-          killSubProcess(child, command.join(' '));
+          child_process.exec('ps -ef', (error, stdout1, stderr1) => {
+            if (error) {
+              writeToOutputs(`Error listing processes: ${error}\n`);
+              return;
+            }
+            if (stderr1) {
+              writeToOutputs(`ps stderr: ${stderr1}\n`);
+            }
+            writeToOutputs(`ps stdout: ${stdout1}\n`);
+          });
+          killSubProcess(child/*, command.join(' ')*/);
         }
       }
     }
@@ -253,7 +273,17 @@ export async function shellWithAction(
         () => {
           if (!actionExecuted) {
             reject(new Error(`Timed out waiting for filter ${JSON.stringify(filter)} to appear in command output after ${actionTimeoutSeconds} seconds\nOutput so far:\n${Buffer.concat(out).toString('utf-8')}`));
-            killSubProcess(child, command.join(' '));
+            child_process.exec('ps -ef', (error, stdout1, stderr1) => {
+              if (error) {
+                writeToOutputs(`Error listing processes: ${error}\n`);
+                return;
+              }
+              if (stderr1) {
+                writeToOutputs(`ps stderr: ${stderr1}\n`);
+              }
+              writeToOutputs(`ps stdout: ${stdout1}\n`);
+            });
+            killSubProcess(child/*, command.join(' ')*/);
           }
         }, actionTimeoutSeconds * 1_000,
       ).unref();
@@ -295,11 +325,12 @@ export async function shellWithAction(
   });
 }
 
-function killSubProcess(child: child_process.ChildProcess, command: string) {
+function killSubProcess(child: child_process.ChildProcess, /*command: string*/) {
   /**
    * Check if the sub process is running in container, so child_process.spawn will
    * create multiple processes, and to kill all of them we need to run different logic
    */
+  // add eun command to get the list of running processes, and print it tp stdout
   child.kill('SIGINT');
-  child_process.exec(`for pid in $(ps -ef | grep "${command}" | awk '{print $2}'); do kill -2 $pid; done`);
+  //child_process.exec(`for pid in $(ps -ef | grep "${command}" | awk '{print $2}'); do kill -2 $pid; done`);
 }
