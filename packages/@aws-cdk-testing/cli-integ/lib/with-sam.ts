@@ -164,13 +164,13 @@ export class SamIntegrationTestFixture extends TestFixture {
         try {
           child_process.exec('ps -ef', (error, stdout1, stderr1) => {
             if (error) {
-              this.output.write(`Error listing processes: ${error}\n`);
+              this.output.write(`before dispose listing processes: ${error}\n`);
               return;
             }
             if (stderr1) {
-              this.output.write(`ps stderr: ${stderr1}\n`);
+              this.output.write(`before dispose ps stderr: ${stderr1}\n`);
             }
-            this.output.write(`ps stdout: ${stdout1}\n`);
+            this.output.write(`before dispose ps stdout: ${stdout1}\n`);
           });
           rimraf(this.integTestDir);
           this.output.write(`Cleanup took ${((Date.now() - start)/1000).toFixed(0)}s\n`);
@@ -253,13 +253,13 @@ export async function shellWithAction(
           writeToOutputs('terminate sam sub process\n');
           child_process.exec('ps -ef', (error, stdout1, stderr1) => {
             if (error) {
-              writeToOutputs(`Error listing processes: ${error}\n`);
+              writeToOutputs(`before killing command ${command.join(' ')} in maybeExecuteAction\nError listing processes: ${error}\n`);
               return;
             }
             if (stderr1) {
-              writeToOutputs(`ps stderr: ${stderr1}\n`);
+              writeToOutputs(`before killing command ${command.join(' ')} in maybeExecuteAction\nps stderr: ${stderr1}\n`);
             }
-            writeToOutputs(`ps stdout: ${stdout1}\n`);
+            writeToOutputs(`before killing command ${command.join(' ')} in maybeExecuteAction\nps stdout: ${stdout1}\n`);
           });
           killSubProcess(child, command.join(' '));
         }
@@ -275,13 +275,13 @@ export async function shellWithAction(
             reject(new Error(`Timed out waiting for filter ${JSON.stringify(filter)} to appear in command output after ${actionTimeoutSeconds} seconds\nOutput so far:\n${Buffer.concat(out).toString('utf-8')}`));
             child_process.exec('ps -ef', (error, stdout1, stderr1) => {
               if (error) {
-                writeToOutputs(`Error listing processes: ${error}\n`);
+                writeToOutputs(`before killing command ${command.join(' ')} in shellWithAction timeout\nError listing processes: ${error}\n`);
                 return;
               }
               if (stderr1) {
-                writeToOutputs(`ps stderr: ${stderr1}\n`);
+                writeToOutputs(`before killing command ${command.join(' ')} in shellWithAction timeout\nps stderr: ${stderr1}\n`);
               }
-              writeToOutputs(`ps stdout: ${stdout1}\n`);
+              writeToOutputs(`before killing command ${command.join(' ')} in shellWithAction timeout\nps stdout: ${stdout1}\n`);
             });
             killSubProcess(child, command.join(' '));
           }
