@@ -155,7 +155,7 @@ export function rimraf(fsPath: string): boolean {
   } catch (e: any) {
     // Can happen if some files got generated inside a Docker container and are now inadvertently owned by `root`.
     // We can't ever clean those up anymore, but since it only happens inside GitHub Actions containers we also don't care too much.
-    if (e.code === 'EACCESS') { return false; }
+    if (e.code === 'EACCES') { return false; }
 
     // Already gone
     if (e.code === 'ENOENT') { return true; }
