@@ -241,8 +241,6 @@ export async function shellWithAction(
           actionOutput = error;
         } finally {
           writeToOutputs('terminate sam sub process\n');
-          const outhelp = child_process.execSync(`help kill`);
-          process.stdout.write(`help ${outhelp}\n`);
           const out1 = child_process.execSync(`ps -ef | grep "${child.pid}"`);
           process.stdout.write(`before killing sub process ps output is ${out1}\n`);
           killSubProcess(child/*, command.join(' ')*/);
