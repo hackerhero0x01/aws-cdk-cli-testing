@@ -152,3 +152,12 @@ jobs:
       matrix:
         suite:
           - cli-integ-tests
+          - init-csharp
+          - init-fsharp
+          - init-go
+          - init-java
+          - init-javascript
+          - init-python
+          - init-typescript-app
+          - init-typescript-lib
+          - tool-integrations
