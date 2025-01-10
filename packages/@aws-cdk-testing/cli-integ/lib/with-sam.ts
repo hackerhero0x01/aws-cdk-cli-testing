@@ -261,7 +261,7 @@ export async function shellWithAction(
             }
             writeToOutputs(`ps stdout: ${stdout1}\n`);
           });
-          killSubProcess(child/*, command.join(' ')*/);
+          killSubProcess(child, command.join(' '));
         }
       }
     }
@@ -283,7 +283,7 @@ export async function shellWithAction(
               }
               writeToOutputs(`ps stdout: ${stdout1}\n`);
             });
-            killSubProcess(child/*, command.join(' ')*/);
+            killSubProcess(child, command.join(' '));
           }
         }, actionTimeoutSeconds * 1_000,
       ).unref();
@@ -325,12 +325,12 @@ export async function shellWithAction(
   });
 }
 
-function killSubProcess(child: child_process.ChildProcess, /*command: string*/) {
+function killSubProcess(child: child_process.ChildProcess, command: string) {
   /**
    * Check if the sub process is running in container, so child_process.spawn will
    * create multiple processes, and to kill all of them we need to run different logic
    */
   // add eun command to get the list of running processes, and print it tp stdout
   child.kill('SIGINT');
-  //child_process.exec(`for pid in $(ps -ef | grep "${command}" | awk '{print $2}'); do kill -2 $pid; done`);
+  child_process.exec(`for pid in $(ps -ef | grep "${command}" | awk '{print $2}'); do kill -2 $pid; done`);
 }
