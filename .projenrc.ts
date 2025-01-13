@@ -137,6 +137,8 @@ const repo = configureProject(
           types: ['feat', 'fix', 'chore', 'refactor'],
         },
       },
+
+      mergify: false,
     },
   }),
 );
