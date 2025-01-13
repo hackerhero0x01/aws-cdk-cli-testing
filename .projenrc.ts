@@ -5,6 +5,11 @@ import * as pj from 'projen';
 // https://github.com/microsoft/TypeScript/issues/60159
 const TYPESCRIPT_VERSION = '5.6';
 
+const TEST_ENVIRONMENT = 'run-tests';
+
+// This is for the test workflow, to know which artifacts to zip up
+const ARTIFACTS_DIR = 'packages/@aws-cdk-testing/cli-integ/dist/js';
+
 /**
  * Projen depends on TypeScript-eslint 7 by default.
  *
@@ -140,6 +145,8 @@ const repo = configureProject(
 
       mergify: false,
     },
+
+    artifactsDirectory: ARTIFACTS_DIR,
   }),
 );
 
@@ -220,5 +227,113 @@ for (const compiledDir of compiledDirs) {
   cliInteg.gitignore.addPatterns(`${compiledDir}/**/*.d.ts`);
 }
 cliInteg.gitignore.addPatterns('!resources/**/*.js');
+
+//////////////////////////////////////////////////////////////////////
+// Add a job for running the tests to the global 'build' workflow
+
+repo.buildWorkflow?.addPostBuildJob("run-tests", {
+  environment: TEST_ENVIRONMENT,
+  runsOn: workflowRunsOn,
+  permissions: {
+    contents: pj.github.workflows.JobPermission.READ,
+    idToken: pj.github.workflows.JobPermission.WRITE,
+  },
+  env: {
+    // Otherwise Maven is too noisy
+    MAVEN_ARGS: '--no-transfer-progress',
+    // This is not actually a canary, but this prevents the tests from making
+    // assumptions about the availability of source packages.
+    IS_CANARY: 'true',
+  },
+  strategy: {
+    failFast: false,
+    matrix: {
+      domain: {
+        suite: [
+          'cli-integ-tests',
+          'init-csharp',
+          'init-fsharp',
+          'init-go',
+          'init-java',
+          'init-javascript',
+          'init-python',
+          'init-typescript-app',
+          'init-typescript-lib',
+          'tool-integrations',
+        ],
+      },
+    },
+  },
+  steps: [
+    {
+      name: 'Set up JDK 18',
+      if: 'matrix.suite == \'init-java\' || matrix.suite == \'cli-integ-tests\'',
+      uses: 'actions/setup-java@v4',
+      with: {
+        'java-version': '18',
+        'distribution': 'corretto',
+      },
+    },
+    {
+      name: "Authenticate Via OIDC Role",
+      id: "creds",
+      uses: "aws-actions/configure-aws-credentials@v4",
+      with: {
+        "aws-region": "us-east-1",
+        "role-duration-seconds": 4 * 60 * 60,
+        // Expect this in Environment Variables
+        "role-to-assume": "${{ vars.AWS_ROLE_TO_ASSUME_FOR_TESTING }}",
+        "role-session-name": "run-tests@aws-cdk-cli-integ",
+        "output-credentials": true,
+      },
+    },
+    // This is necessary for the init tests to succeed, they set up a git repo.
+    {
+      name: 'Set git identity',
+      run: [
+        'git config --global user.name "aws-cdk-cli-integ"',
+        'git config --global user.email "noreply@example.com"',
+      ].join('\n'),
+    },
+    {
+      name: "Download and install the test artifact",
+      run: [
+        `npm install --no-save ${ARTIFACTS_DIR}/*.tgz`,
+        // Move the installed files to the current directory, because as
+        // currently configured the tests won't run from an installed
+        // node_modules directory.
+        "mv $(./node_modules/.bin/test-root)/* .",
+      ].join("\n"),
+    },
+    {
+      name: "Determine latest CLI version",
+      id: 'cli_version',
+      run: [
+        "CLI_VERSION=$(cd ${TMPDIR:-/tmp} && npm view aws-cdk version)",
+        'echo "CLI version: ${CLI_VERSION}"',
+        'echo "cli_version=${CLI_VERSION}" >> $GITHUB_OUTPUT',
+      ].join('\n'),
+
+    },
+    {
+      name: "Run the test suite: ${{ matrix.suite }}",
+      run: [
+        "bin/run-suite --use-cli-release=${{ steps.cli_version.outputs.cli_version }} --verbose ${{ matrix.suite }}",
+      ].join('\n'),
+      env: {
+        // Concurrency only for long-running cli-integ-tests
+        JEST_TEST_CONCURRENT: "${{ matrix.suite == 'cli-integ-tests' && 'true' || 'false' }}",
+        JSII_SILENCE_WARNING_DEPRECATED_NODE_VERSION: 'true',
+        JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION: 'true',
+        JSII_SILENCE_WARNING_KNOWN_BROKEN_NODE_VERSION: 'true',
+        DOCKERHUB_DISABLED: 'true',
+        AWS_REGIONS: ['us-east-2', 'eu-west-1', 'eu-north-1', 'ap-northeast-1', 'ap-south-1'].join(','),
+        CDK_MAJOR_VERSION: '2',
+        RELEASE_TAG: 'latest',
+        GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}',
+      },
+    },
+  ],
+});
 
 repo.synth();
