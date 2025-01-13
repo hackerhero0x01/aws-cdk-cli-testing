@@ -136,18 +136,19 @@ const repo = configureProject(
     },
 
     githubOptions: {
+      mergeQueue: true,
       pullRequestLintOptions: {
         semanticTitleOptions: {
           types: ['feat', 'fix', 'chore', 'refactor'],
         },
       },
+
+      mergify: false,
     },
 
     artifactsDirectory: ARTIFACTS_DIR,
   }),
 );
-
-new pj.github.AutoQueue(repo);
 
 const cliInteg = configureProject(
   new yarn.TypeScriptWorkspace({
