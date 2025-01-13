@@ -317,10 +317,6 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
     {
       name: "Run the test suite: ${{ matrix.suite }}",
       run: [
-        "whoami",
-        "node -p 'os.userInfo()'",
-        "id -u",
-        "id -g",
         "bin/run-suite --use-cli-release=${{ steps.cli_version.outputs.cli_version }} --verbose ${{ matrix.suite }}",
       ].join('\n'),
       env: {
