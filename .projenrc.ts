@@ -229,9 +229,33 @@ for (const compiledDir of compiledDirs) {
 cliInteg.gitignore.addPatterns('!resources/**/*.js');
 
 //////////////////////////////////////////////////////////////////////
-// Add a job for running the tests to the global 'build' workflow
+// Add a workflow for running the tests
+//
+// This MUST be a separate workflow, triggered by `workflow_run`, because otherwise
+// it cannot be privileged. This will use the workflow file from the `main` branch.
 
-repo.buildWorkflow?.addPostBuildJob("run-tests", {
+const runTestsWorkflow = repo.github?.addWorkflow('run-tests');
+if (!runTestsWorkflow || !repo.buildWorkflow) {
+  throw new Error('Missing workflows');
+}
+// Just add any empty step, this will cause the logic in the build step to add
+// the 'upload-artifact' step.
+repo.buildWorkflow.addPostBuildJob('post-build', {
+  runsOn: workflowRunsOn,
+  permissions: {
+  },
+  steps: [],
+});
+
+runTestsWorkflow.on({
+  workflowRun: {
+    workflows: [repo.buildWorkflow.name],
+    types: ['completed'],
+  },
+});
+runTestsWorkflow.addJob("run-tests", {
+  // Only if the build passed
+  if: "${{ github.event.workflow_run.conclusion == 'success' }}",
   environment: TEST_ENVIRONMENT,
   runsOn: workflowRunsOn,
   permissions: {
@@ -265,6 +289,22 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
     },
   },
   steps: [
+    {
+      // From <https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#workflow_run>
+      name: 'Download build artifact from build workflow',
+      uses: 'dawidd6/action-download-artifact@v7',
+      with: {
+        run_id: '${{ github.event.workflow_run.id }}',
+        name: 'build-artifact',
+        path: 'packages/@aws-cdk-testing/cli-integ/dist/js',
+        search_artifacts: true
+      },
+    },
+    {
+      name: 'Restore build artifact permissions',
+      run: 'cd packages/@aws-cdk-testing/cli-integ/dist/js && setfacl --restore=permissions-backup.acl',
+      continueOnError: true,
+    },
     {
       name: 'Set up JDK 18',
       if: 'matrix.suite == \'init-java\' || matrix.suite == \'cli-integ-tests\'',
