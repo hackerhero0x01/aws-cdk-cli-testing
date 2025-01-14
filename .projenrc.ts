@@ -229,11 +229,97 @@ for (const compiledDir of compiledDirs) {
 cliInteg.gitignore.addPatterns('!resources/**/*.js');
 
 //////////////////////////////////////////////////////////////////////
-// Add a job for running the tests to the global 'build' workflow
+// Add a workflow for running the tests
+//
+// This MUST be a separate workflow that runs in privileged context. We have a couple
+// of options:
+//
+// - `workflow_run`: we can trigger a privileged workflow run after the unprivileged
+//   `pull_request` workflow finishes and reuse its output artifacts. The
+//   problem is that the second run is disconnected from the PR so we would need
+//   to script in visibility for approvals and success (by posting comments, for
+//   example)
+// - Use only a `pull_request_target` workflow on the PR: this either would run
+//   a privileged workflow on any user code submission (might be fine given the
+//   workflow's `permissions`, but I'm sure this will make our security team uneasy
+//   anyway), OR this would mean any build needs human confirmation which means slow
+//   feedback.
+// - Use a `pull_request` for a regular fast-feedback build, and a separate
+//   `pull_request_target` for the integ tests. This means we're building twice.
+//
+// Ultimately, our build isn't heavy enough to put in a lot of effort deduping
+// it, so we'll go with the simplest solution which is the last one: 2
+// independent workflows.
+//
+// projen doesn't make it easy to copy the relevant parts of the 'build' workflow,
+// so they're unfortunately duplicated here.
 
-repo.buildWorkflow?.addPostBuildJob("run-tests", {
+const buildWorkflow = repo.buildWorkflow;
+const runTestsWorkflow = repo.github?.addWorkflow('build-and-integ');
+if (!buildWorkflow || !runTestsWorkflow) {
+  throw new Error('Expected build and run tests workflow');
+}
+((buildWorkflow as any).workflow as pj.github.GithubWorkflow)
+
+
+runTestsWorkflow.on({
+  pullRequestTarget: {
+    branches: ['main'],
+  },
+});
+runTestsWorkflow.addJob('build', {
   environment: TEST_ENVIRONMENT,
   runsOn: workflowRunsOn,
+  permissions: {
+    contents: pj.github.workflows.JobPermission.READ,
+  },
+  env: {
+    CI: 'true',
+  },
+  steps: [
+    {
+      name: 'Checkout',
+      uses: 'actions/checkout@v4',
+      with: {
+        ref: '${{ github.event.pull_request.head.ref }}',
+        repository: '${{ github.event.pull_request.head.repo.full_name }}',
+      }
+    },
+    {
+      name: 'Setup Node.js',
+      uses: 'actions/setup-node@v4',
+      with: {
+        'node-version': 'lts/*',
+      }
+    },
+    {
+      name: 'Install dependencies',
+      run: 'yarn install --check-files',
+    },
+    {
+      name: 'build',
+      run: 'npx projen build',
+    },
+    {
+      name: 'Backup artifact permissions',
+      run: 'cd packages/@aws-cdk-testing/cli-integ/dist/js && getfacl -R . > permissions-backup.acl',
+      continueOnError: true,
+    },
+    {
+      name: 'Upload artifact',
+      uses: 'actions/upload-artifact@v4.4.0',
+      with: {
+        name: 'build-artifact',
+        path: 'packages/@aws-cdk-testing/cli-integ/dist/js',
+        overwrite: 'true',
+      }
+    },
+  ],
+});
+runTestsWorkflow.addJob('integ', {
+  environment: TEST_ENVIRONMENT,
+  runsOn: workflowRunsOn,
+  needs: ['build'],
   permissions: {
     contents: pj.github.workflows.JobPermission.READ,
     idToken: pj.github.workflows.JobPermission.WRITE,
@@ -244,6 +330,7 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
     // This is not actually a canary, but this prevents the tests from making
     // assumptions about the availability of source packages.
     IS_CANARY: 'true',
+    CI: 'true',
   },
   strategy: {
     failFast: false,
@@ -265,6 +352,19 @@ repo.buildWorkflow?.addPostBuildJob("run-tests", {
     },
   },
   steps: [
+    {
+      name: 'Download build artifacts',
+      uses: 'actions/download-artifact@v4',
+      with: {
+        name: 'build-artifact',
+        path: 'packages/@aws-cdk-testing/cli-integ/dist/js',
+      }
+    },
+    {
+      name: 'Restore build artifact permissions',
+      run: 'cd packages/@aws-cdk-testing/cli-integ/dist/js && setfacl --restore=permissions-backup.acl',
+      continueOnError: true,
+    },
     {
       name: 'Set up JDK 18',
       if: 'matrix.suite == \'init-java\' || matrix.suite == \'cli-integ-tests\'',
