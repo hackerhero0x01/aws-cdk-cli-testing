@@ -11,6 +11,9 @@ const TEST_ENVIRONMENT = 'run-tests';
 // This is for the test workflow, to know which artifacts to zip up
 const ARTIFACTS_DIR = 'packages/@aws-cdk-testing/cli-integ/dist/js';
 
+// Test runner
+const TEST_RUNNER = 'aws-cdk_ubuntu-latest_4-core';
+
 /**
  * Projen depends on TypeScript-eslint 7 by default.
  *
@@ -322,7 +325,7 @@ runTestsWorkflow.addJob('build', {
 });
 runTestsWorkflow.addJob('integ', {
   environment: TEST_ENVIRONMENT,
-  runsOn: workflowRunsOn,
+  runsOn: [TEST_RUNNER],
   needs: ['build'],
   permissions: {
     contents: pj.github.workflows.JobPermission.READ,
