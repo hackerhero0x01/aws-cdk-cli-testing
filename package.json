@@ -19,15 +19,15 @@
     "projen": "npx projen"
   },
   "devDependencies": {
-    "@cdklabs/eslint-plugin": "^1.3.0",
+    "@cdklabs/eslint-plugin": "^1.3.2",
     "@stylistic/eslint-plugin": "^2.13.0",
-    "@types/node": "^22.10.6",
+    "@types/node": "^22.10.7",
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
     "cdklabs-projen-project-types": "^0.1.215",
     "constructs": "^10.0.0",
     "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-jest": "^28.10.0",
+    "eslint-plugin-jest": "^28.11.0",
     "prettier": "^2.8",
     "projen": "^0.91.6",
     "ts-node": "^10.9.2",
