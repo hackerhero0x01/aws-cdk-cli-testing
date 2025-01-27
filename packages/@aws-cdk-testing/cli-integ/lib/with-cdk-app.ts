@@ -505,6 +505,8 @@ export class TestFixture extends ShellHelper {
         AWS_DEFAULT_REGION: this.aws.region,
         STACK_NAME_PREFIX: this.stackNamePrefix,
         PACKAGE_LAYOUT_VERSION: this.packages.majorVersion(),
+        // CI must be unset, because we're trying to capture stdout in a bunch of tests
+        CI: undefined,
         ...options.modEnv,
       },
     });
