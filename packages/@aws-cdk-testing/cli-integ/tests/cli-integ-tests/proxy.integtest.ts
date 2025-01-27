@@ -59,7 +59,6 @@ async function runInIsolatedContainer(fixture: TestFixture, pathsToMount: string
       ...['HOME', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN'].flatMap(e => ['-e', e]),
       '-w', fixture.integTestDir,
       '--cap-add=NET_ADMIN',
-      '--add-host=host.docker.internal:host-gateway',
       'ubuntu:latest',
       `${scriptName}`,
     ], {
@@ -79,7 +78,7 @@ function isolatedDockerCommands(proxyPort: number, caBundlePath: string) {
     'echo Working...',
     'apt-get install -qqy curl net-tools iputils-ping dnsutils iptables > /dev/null',
     '',
-    'gateway=$(dig +short host.docker.internal)',
+    'gateway=172.17.0.1',
     '',
     '# Some iptables manipulation; there might be unnecessary commands in here, not an expert',
     'iptables -F',
