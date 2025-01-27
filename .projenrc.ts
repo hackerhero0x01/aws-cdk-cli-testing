@@ -200,6 +200,7 @@ const cliInteg = configureProject(
       'jest@^29',
       'jest-junit@^15',
       'ts-jest@^29',
+      '@cdklabs/cdk-atmosphere-client',
     ],
     devDeps: [
       '@types/semver@^7',
