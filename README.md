@@ -20,7 +20,4 @@ $ bin/run-suite \
   cli-integ-tests",
 ```
 
-Force update
-x
-x
-x
+
