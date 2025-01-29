@@ -22,3 +22,4 @@ $ bin/run-suite \
 
 Force update
 x
+x
