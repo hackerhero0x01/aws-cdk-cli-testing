@@ -27,14 +27,11 @@ jobs:
         run: yarn install --check-files
       - name: build
         run: npx projen build
-      - name: Backup artifact permissions
-        run: cd packages/@aws-cdk-testing/cli-integ/dist/js && getfacl -R . > permissions-backup.acl
-        continue-on-error: true
       - name: Upload artifact
         uses: actions/upload-artifact@v4.4.0
         with:
           name: build-artifact
-          path: packages/@aws-cdk-testing/cli-integ/dist/js
+          path: packages/**/dist/js/*.tgz
           overwrite: "true"
   integ:
     needs: build
@@ -52,10 +49,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifact
-          path: packages/@aws-cdk-testing/cli-integ/dist/js
-      - name: Restore build artifact permissions
-        run: cd packages/@aws-cdk-testing/cli-integ/dist/js && setfacl --restore=permissions-backup.acl
-        continue-on-error: true
+          path: packages
       - name: Set up JDK 18
         if: matrix.suite == 'init-java' || matrix.suite == 'cli-integ-tests'
         uses: actions/setup-java@v4
@@ -90,7 +84,7 @@ jobs:
           npm config set registry http://localhost:4873/
           echo '//localhost:4873/:_authToken="MWRjNDU3OTE1NTljYWUyOTFkMWJkOGUyYTIwZWMwNTI6YTgwZjkyNDE0NzgwYWQzNQ=="' > ~/.npmrc
       - name: Find an locally publish all tarballs
-        run: find packages/@aws-cdk-testing/cli-integ/dist/js -name \*.tgz -print0 | xargs -0 -n1 npm publish --registry http://localhost:4873/
+        run: find packages -name \*.tgz -print0 | xargs -0 -n1 npm publish --registry http://localhost:4873/
       - name: Download and install the test artifact
         run: |-
           npm install @aws-cdk-testing/cli-integ
