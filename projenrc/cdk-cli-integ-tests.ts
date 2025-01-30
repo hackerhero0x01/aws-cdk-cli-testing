@@ -94,7 +94,9 @@ export class CdkCliIntegTestsWorkflow extends Component {
           name: 'Checkout',
           uses: 'actions/checkout@v4',
           with: {
-            ref: '${{ github.event.pull_request.head.ref }}',
+            // IMPORTANT! This must be `head.sha` not `head.ref`, otherwise we
+            // are vulnerable to a TOCTOU attack.
+            ref: '${{ github.event.pull_request.head.sha }}',
             repository: '${{ github.event.pull_request.head.repo.full_name }}',
           }
         },
