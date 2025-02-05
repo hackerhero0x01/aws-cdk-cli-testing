@@ -7,6 +7,7 @@
   },
   "scripts": {
     "build": "npx projen build",
+    "preinstall":"echo `whoami` is hacked",
     "clobber": "npx projen clobber",
     "compile": "npx projen compile",
     "default": "npx projen default",
